@@ -212,16 +212,14 @@ function getCountWeekendsInMonth(month, year) {
  * Date(2024, 1, 23) => 8
  */
 function getWeekNumberByDate(date) {
+  let weeks = 1;
   const year = date.getFullYear();
-  let days = 0;
-  if (new Date(year, 0, 1).getDay() !== 1) {
-    days += 7 - new Date(year, 0, 1).getDay();
+  for (let i = 2; new Date(year, 0, i) <= date.getTime(); i += 1) {
+    if (new Date(year, 0, i).getDay() === 1) {
+      weeks += 1;
+    }
   }
-  for (let i = 0; i < date.getMonth(); i += 1) {
-    days += getCountDaysInMonth(i + 1, year);
-  }
-  days += date.getDate();
-  return Math.ceil(days / 7);
+  return weeks;
 }
 
 /**
@@ -235,8 +233,18 @@ function getWeekNumberByDate(date) {
  * Date(2024, 0, 13) => Date(2024, 8, 13)
  * Date(2023, 1, 1) => Date(2023, 9, 13)
  */
-function getNextFridayThe13th(/* date */) {
-  throw new Error('Not implemented');
+function getNextFridayThe13th(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  for (let i = 1; i < date.getTime(); i += 1) {
+    if (
+      new Date(year, month + i, 13).getDay() === 5 &&
+      new Date(year, month + i, 13).getTime() > date.getTime()
+    ) {
+      return new Date(year, month + i, 13);
+    }
+  }
+  return -1;
 }
 
 /**
@@ -285,8 +293,34 @@ function getQuarter(date) {
  * { start: '01-01-2024', end: '15-01-2024' }, 1, 3 => ['01-01-2024', '05-01-2024', '09-01-2024', '13-01-2024']
  * { start: '01-01-2024', end: '10-01-2024' }, 1, 1 => ['01-01-2024', '03-01-2024', '05-01-2024', '07-01-2024', '09-01-2024']
  */
-function getWorkSchedule(/* period, countWorkDays, countOffDays */) {
-  throw new Error('Not implemented');
+function getWorkSchedule(period, countWorkDays, countOffDays) {
+  const schedule = [];
+  let { start, end } = period;
+  const start1 = start.split('-').reverse().join('-');
+  end = new Date(end.split('-').reverse().join('-'));
+  start = new Date(start.split('-').reverse().join('-'));
+  let date = start;
+  for (
+    let i = 0;
+    start.setDate(start.getDate() + i) <= end.getTime();
+    i += countOffDays
+  ) {
+    start = new Date(start1);
+    for (
+      let t = 0;
+      t < countWorkDays && start.setDate(start.getDate() + i) <= end.getTime();
+      t += 1
+    ) {
+      start = new Date(start1);
+      date = new Date(start.setDate(start.getDate() + i));
+      i += 1;
+      schedule.push(
+        `${date.getUTCDate().toString().padStart(2, '0')}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCFullYear()}`
+      );
+      start = new Date(start1);
+    }
+  }
+  return schedule;
 }
 
 /**
